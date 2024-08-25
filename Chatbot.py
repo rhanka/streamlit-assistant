@@ -16,7 +16,7 @@ if os.environ["OPENAI_API_KEY"] is None or assistant_id is None:
 #     "[View the source code](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py)"
 #     "[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/streamlit/llm-examples?quickstart=1)"
 
-st.title("💬 Chatbot Documentation Nethris")
+st.title("💬 Documentation Nethris")
 
 client = OpenAI()
 if "session_id" not in st.session_state:
