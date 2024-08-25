@@ -8,15 +8,16 @@ import time
 assistant_id = os.environ.get("ASSISTANT_ID")
 
 if os.environ["OPENAI_API_KEY"] is None or assistant_id is None:
-    st.error("Environment variables for API keys are not s set.")
+    st.error("Environment variables for API keys are not set.")
 
-# with st.sidebar:
-#     # openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
-#     "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
-#     "[View the source code](https://github.com/streamlit/llm-examples/blob/main/Chatbot.py)"
-#     "[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/streamlit/llm-examples?quickstart=1)"
+with st.sidebar:
+    st.sidebar.empty()
+     # openai_api_key = st.text_input("OpenAI API Key", key="chatbot_api_key", type="password")
+    "[Get an OpenAI API key](https://platform.openai.com/account/api-keys)"
+    "[View the source code](https://github.com/rhanka/streamlit-assistant/blob/main/Chatbot.py)"
 
 st.title("💬 Documentation Nethris")
+nethris_base_url="https://clients.nethris.com/WebCommon/HelpFiles/CGI/EN/PAY/index.html?"
 
 client = OpenAI()
 if "session_id" not in st.session_state:
@@ -57,23 +58,25 @@ elif hasattr(st.session_state.run, 'status') and st.session_state.run.status == 
             message_content = message_content.text
             annotations = message_content.annotations
             citations = []
-            
-            # Iterate over the annotations and add footnotes
-            # for index, annotation in enumerate(annotations):
-            #     # Replace the text with a footnote
-            #     message_content.value = message_content.value.replace(annotation.text, f' [{index}]')
-            
-            #     # Gather citations based on annotation attributes
-            #     if (file_citation := getattr(annotation, 'file_citation', None)):
-            #         cited_file = client.files.retrieve(file_citation.file_id)
-            #         citations.append(f'[{index}] {file_citation.quote} from {cited_file.filename}')
-            #     elif (file_path := getattr(annotation, 'file_path', None)):
-            #         cited_file = client.files.retrieve(file_path.file_id)
-            #         citations.append(f'[{index}] Click <here> to download {cited_file.filename}')
-            #         # Note: File download functionality not implemented above for brevity
 
-            # # Add footnotes to the end of the message before displaying to user
-            # message_content.value += '\n' + '\n'.join(citations)
+            # Iterate over the annotations and add footnotes
+            for index, annotation in enumerate(annotations):
+                # Replace the text with a footnote
+
+                cited_file=""
+                # Gather citations based on annotation attributes
+                if (file_citation := getattr(annotation, 'file_citation', None)):
+                    cited_file = client.files.retrieve(file_citation.file_id)
+                elif (file_path := getattr(annotation, 'file_path', None)):
+                    cited_file = client.files.retrieve(file_path.file_id)
+                cited_file = cited_file.filename.replace(".md", "")
+                cited_url = f'{nethris_base_url}{cited_file}'
+                citation_url_short = f'[[{index}]†]({cited_url})'
+                citations.append(f'[[{index}†]{cited_file}]({cited_url})')
+                message_content.value = message_content.value.replace(annotation.text, f' {citation_url_short}')
+
+            # Add footnotes to the end of the message before displaying to user
+            message_content.value += '\n\n' + '\n'.join(citations)
 
     # Display messages
     for message in reversed(st.session_state.messages.data):
