@@ -61,9 +61,10 @@ elif hasattr(st.session_state.run, 'status') and st.session_state.run.status == 
             message_content = message_content.text
             annotations = message_content.annotations
             citations = []
-
+            index = 0
+            seen_files = []
             # Iterate over the annotations and add footnotes
-            for index, annotation in enumerate(annotations):
+            for i, annotation in enumerate(annotations):
                 # Replace the text with a footnote
 
                 cited_file=""
@@ -73,11 +74,16 @@ elif hasattr(st.session_state.run, 'status') and st.session_state.run.status == 
                 elif (file_path := getattr(annotation, 'file_path', None)):
                     cited_file = client.files.retrieve(file_path.file_id)
                 cited_file = cited_file.filename.replace(".md", "")
-                cited_url = f'{nethris_base_url}{cited_file}'
-                cited_full_url = f'{nethris_base_full_url}{cited_file}'
-                citation_url_short = f'[[{index}†]]({cited_url})'
-                #citations.append(f'[[{index}†]{cited_file}]({cited_url})')
-                citations.append({"file": cited_file, "url": cited_url, "full_url": cited_full_url})
+                if cited_file not in seen_files:
+                    seen_files.append(cited_file)
+                    cited_index = index
+                    index += 1
+                    cited_url = f'{nethris_base_url}{cited_file}'
+                    cited_full_url = f'{nethris_base_full_url}{cited_file}'
+                    citations.append({"file": cited_file, "url": cited_url, "full_url": cited_full_url})
+                else:
+                    cited_index = seen_files.index(cited_file)
+                citation_url_short = f'[[{cited_index}†]]({cited_url})'
                 message_content.value = message_content.value.replace(annotation.text, f' {citation_url_short}')
 
             # Add footnotes to the end of the message before displaying to user
