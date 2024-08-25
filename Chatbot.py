@@ -4,6 +4,8 @@ import os
 import uuid
 import streamlit as st
 import time
+import urllib.request
+import streamlit.components.v1 as components
 
 assistant_id = os.environ.get("ASSISTANT_ID")
 
@@ -17,7 +19,8 @@ with st.sidebar:
     "[View the source code](https://github.com/rhanka/streamlit-assistant/blob/main/Chatbot.py)"
 
 st.title("💬 Documentation Nethris")
-nethris_base_url="https://clients.nethris.com/WebCommon/HelpFiles/CGI/FR/PAY/index.html?"
+nethris_base_url="https://clients.nethris.com/WebCommon/HelpFiles/CGI/FR/PAY/"
+nethris_base_full_url="https://clients.nethris.com/WebCommon/HelpFiles/CGI/FR/PAY/index?"
 
 client = OpenAI()
 if "session_id" not in st.session_state:
@@ -35,7 +38,7 @@ if "retry_error" not in st.session_state:
 
 if "assistant" not in st.session_state:
     # Load the previously created assistant
-    st.caption("🚀 Assistant initialisé !")
+    st.caption("🚀 Poser une question à l'assistant de documentation !")
     st.session_state.assistant = beta.assistants.retrieve(assistant_id)
 
     # Create a new thread for this session
@@ -71,20 +74,35 @@ elif hasattr(st.session_state.run, 'status') and st.session_state.run.status == 
                     cited_file = client.files.retrieve(file_path.file_id)
                 cited_file = cited_file.filename.replace(".md", "")
                 cited_url = f'{nethris_base_url}{cited_file}'
-                citation_url_short = f'[[{index}]†]({cited_url})'
-                citations.append(f'[[{index}†]{cited_file}]({cited_url})')
+                cited_full_url = f'{nethris_base_full_url}{cited_file}'
+                citation_url_short = f'[[{index}†]]({cited_url})'
+                #citations.append(f'[[{index}†]{cited_file}]({cited_url})')
+                citations.append({"file": cited_file, "url": cited_url, "full_url": cited_full_url})
                 message_content.value = message_content.value.replace(annotation.text, f' {citation_url_short}')
 
             # Add footnotes to the end of the message before displaying to user
-            message_content.value += '\n\n' + '\n'.join(citations)
+            # message_content.value += '\n\n' + '\n'.join(citations)
+            message_content.citations = citations
 
     # Display messages
     for message in reversed(st.session_state.messages.data):
         if message.role in ["user", "assistant"]:
             with st.chat_message(message.role):
                 for content_part in message.content:
-                    message_text = content_part.text.value
-                    st.markdown(message_text)
+                    st.markdown(content_part.text.value)
+                    #st.markdown('\n---\n'.join(content_part.text.citations))
+                    #str.write(content_part.text.citations)
+                    index=0
+                    for citation in content_part.text.citations:
+                        with st.popover(f'[{index}†] {citation["file"]}'):
+                            iframe_code = f"""
+                                <iframe src="{citation["url"]}" width="100%" height="500px" frameborder="0" style="border:0;" allowfullscreen></iframe>
+                            """
+                            components.html(iframe_code, height=500)
+                            # with urllib.request.urlopen(citation["url"]) as response:
+                            #     st.write(response.read())
+                            st.write(citation["full_url"])
+                        index+=1
 
 if prompt := st.chat_input("Poser une question relative à la documentation Nethris"):
     with st.chat_message('user'):
