@@ -17,7 +17,7 @@ with st.sidebar:
     "[View the source code](https://github.com/rhanka/streamlit-assistant/blob/main/Chatbot.py)"
 
 st.title("💬 Documentation Nethris")
-nethris_base_url="https://clients.nethris.com/WebCommon/HelpFiles/CGI/EN/PAY/index.html?"
+nethris_base_url="https://clients.nethris.com/WebCommon/HelpFiles/CGI/FR/PAY/index.html?"
 
 client = OpenAI()
 if "session_id" not in st.session_state:
